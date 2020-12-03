@@ -1,0 +1,42 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+
+metadata:
+  name: dev-poc
+  region: eu-central-1
+
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: false
+
+nodeGroups:
+  - name: dev-worker-nodes
+    tags:
+      # EC2 tags required for cluster-autoscaler auto-discovery
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/dev-poc: "owned"
+    instanceType: t2.micro
+    desiredCapacity: 2
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        albIngress: true
+        cloudWatch: true
+    minSize: 2
+    maxSize: 5
+    volumeSize: 30
+    volumeType: gp2
+    ami: auto
+    amiFamily: Ubuntu1804
+    kubeletExtraConfig:
+        featureGates:
+            VolumeSnapshotDataSource: true
+            DynamicKubeletConfig: true
+            RotateKubeletServerCertificate: true # has to be enabled, otherwise it will be disabled
+    privateNetworking: true
+    ssh: # use existing EC2 key
+      publicKeyName: kops-test
